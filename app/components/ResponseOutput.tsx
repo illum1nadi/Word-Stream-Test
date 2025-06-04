@@ -1,10 +1,10 @@
 import React from 'react';
 
 interface ResponseOutputProps {
-  response: string;
+  responseText: string;
 }
 
-export default function ResponseOutput({ response }: ResponseOutputProps) {
+export default function ResponseOutput({ responseText }: ResponseOutputProps) {
   return (
     <pre
       style={{
@@ -13,9 +13,11 @@ export default function ResponseOutput({ response }: ResponseOutputProps) {
         backgroundColor: '#f0f0f0',
         minHeight: 100,
         whiteSpace: 'pre-wrap',
+        fontSize: 16,
+        transition: 'opacity 0.3s ease',
       }}
     >
-      {response}
+      {responseText}
     </pre>
   );
 }

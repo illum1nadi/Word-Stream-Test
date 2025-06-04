@@ -1,33 +1,34 @@
-"use client";
-import { useState } from 'react';
+'use client';
 
-function streamWords(
+import { useState } from 'react';
+import PromptInput from './components/PromptInput';
+import ResponseOutput from './components/ResponseOutput';
+
+function streamCharacters(
   text: string,
-  setOutput: React.Dispatch<React.SetStateAction<string>>,
-  delay = 50
+  setChars: React.Dispatch<React.SetStateAction<string>>,
+  delay = 25
 ) {
-  const words = text.split(' ');
   let index = 0;
 
-  function showNextWord() {
-    if (index < words.length) {
-      setOutput((prev) => prev + (prev ? ' ' : '') + words[index]);
+  function showNext() {
+    if (index < text.length) {
+      setChars((prev) => prev + text[index]);
       index++;
-      setTimeout(showNextWord, delay);
+      setTimeout(showNext, delay);
     }
   }
 
-  showNextWord();
+  showNext();
 }
 
 export default function Home() {
-  const [prompt, setPrompt] = useState('');
-  const [response, setResponse] = useState('');
+  const [responseText, setResponseText] = useState('');
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit() {
+  async function handlePrompt(prompt: string) {
     setLoading(true);
-    setResponse('');
+    setResponseText('');
 
     try {
       const res = await fetch('/api/gemini', {
@@ -36,14 +37,12 @@ export default function Home() {
         body: JSON.stringify({ prompt }),
       });
 
-      if (!res.ok) {
-        throw new Error('Failed to fetch response');
-      }
+      if (!res.ok) throw new Error('Failed to fetch');
 
       const data = await res.json();
-      streamWords(data.text, setResponse, 50); // ✅ Stream the words
-    } catch (err) {
-      setResponse('Error: ' + (err as Error).message);
+      streamCharacters(data.text, setResponseText, 25); // Character streaming
+    } catch (e) {
+      setResponseText('Error: ' + (e as Error).message);
     } finally {
       setLoading(false);
     }
@@ -52,31 +51,8 @@ export default function Home() {
   return (
     <div style={{ padding: 20, maxWidth: 600, margin: 'auto' }}>
       <h1>AI Gemini Prompt</h1>
-      <textarea
-        rows={4}
-        style={{ width: '100%', fontSize: 16 }}
-        placeholder="Enter your prompt here..."
-        value={prompt}
-        onChange={(e) => setPrompt(e.target.value)}
-      />
-      <button
-        onClick={handleSubmit}
-        disabled={loading || prompt.trim() === ''}
-        style={{ marginTop: 10, padding: '8px 16px', fontSize: 16 }}
-      >
-        {loading ? 'Loading...' : 'Send'}
-      </button>
-      <pre
-        style={{
-          marginTop: 20,
-          padding: 10,
-          backgroundColor: '#f0f0f0',
-          minHeight: 100,
-          whiteSpace: 'pre-wrap',
-        }}
-      >
-        {response}
-      </pre>
+      <PromptInput onSubmit={handlePrompt} loading={loading} />
+      <ResponseOutput responseText={responseText} />
     </div>
   );
 }
