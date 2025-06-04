@@ -16,18 +16,18 @@ export default function ResponseOutput({ responseText }: ResponseOutputProps) {
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           components={{
-            h1: ({ node, ...props }) => <Typography variant="h4" gutterBottom {...props} />,
-            h2: ({ node, ...props }) => <Typography variant="h5" gutterBottom {...props} />,
-            h3: ({ node, ...props }) => <Typography variant="h6" gutterBottom {...props} />,
-            h4: ({ node, ...props }) => <Typography variant="subtitle1" gutterBottom {...props} />,
-            h5: ({ node, ...props }) => <Typography variant="subtitle2" gutterBottom {...props} />,
-            h6: ({ node, ...props }) => <Typography variant="body1" fontWeight={700} gutterBottom {...props} />,
-            p: ({ node, ...props }) => <Typography variant="body1" paragraph {...props} />,
-            ul: ({ node, ...props }) => <List sx={{ listStyleType: 'disc', pl: 3 }} {...props} />,
-            ol: ({ node, ...props }) => <List sx={{ listStyleType: 'decimal', pl: 3 }} {...props} />,
-            li: ({ node, ...props }) => <ListItem sx={{ display: 'list-item', pl: 0 }} {...props} />,
-            a: ({ node, ...props }) => <MuiLink target="_blank" rel="noopener" {...props} />,
-            blockquote: ({ node, ...props }) => (
+            h1: ({ ...props }) => <Typography variant="h4" gutterBottom {...props} />,
+            h2: ({ ...props }) => <Typography variant="h5" gutterBottom {...props} />,
+            h3: ({ ...props }) => <Typography variant="h6" gutterBottom {...props} />,
+            h4: ({ ...props }) => <Typography variant="subtitle1" gutterBottom {...props} />,
+            h5: ({ ...props }) => <Typography variant="subtitle2" gutterBottom {...props} />,
+            h6: ({ ...props }) => <Typography variant="body1" fontWeight={700} gutterBottom {...props} />,
+            p: ({ ...props }) => <Typography variant="body1" paragraph {...props} />,
+            ul: ({ ...props }) => <List sx={{ listStyleType: 'disc', pl: 3 }} {...props} />,
+            ol: ({ ...props }) => <List sx={{ listStyleType: 'decimal', pl: 3 }} {...props} />,
+            li: ({ ...props }) => <ListItem sx={{ display: 'list-item', pl: 0 }} {...props} />,
+            a: ({ ...props }) => <MuiLink target="_blank" rel="noopener" {...props} />,
+            blockquote: ({ ...props }) => (
               <Typography
                 component="blockquote"
                 sx={{
