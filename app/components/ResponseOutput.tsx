@@ -64,10 +64,10 @@ export default function ResponseOutput({ responseText }: ResponseOutputProps) {
                 </Box>
               );
             },
-            table: ({ node, ...props }) => (
+            table: ({ ...props }) => (
               <Box component="table" sx={{ width: '100%', borderCollapse: 'collapse', my: 2 }} {...props} />
             ),
-            th: ({ node, ...props }) => (
+            th: ({ ...props }) => (
               <Box
                 component="th"
                 sx={{
@@ -79,10 +79,10 @@ export default function ResponseOutput({ responseText }: ResponseOutputProps) {
                 {...props}
               />
             ),
-            td: ({ node, ...props }) => (
+            td: ({ ...props }) => (
               <Box component="td" sx={{ border: '1px solid #ccc', p: 1 }} {...props} />
             ),
-            tr: ({ node, ...props }) => <Box component="tr" {...props} />,
+            tr: ({ ...props }) => <Box component="tr" {...props} />,
           }}
         >
           {responseText}
