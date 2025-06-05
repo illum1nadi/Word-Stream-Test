@@ -5,7 +5,7 @@ import PromptInput from './components/PromptInput';
 import ResponseOutput from './components/ResponseOutput';
 import { useStreamingBuffer } from './lib/useWordStream';
 
-//mimic a chunked stream from Gemini API as gemini does not support streaming in this example.
+// Mimic a chunked stream from Gemini API as gemini does not support streaming in this example.
 const streamIdRef = { current: 0 };
 function mockChunkedStream(
   fullText: string,
@@ -20,7 +20,6 @@ function mockChunkedStream(
     if (streamIdObj.current !== myStreamId) return; // Stop if a new stream started
     if (index < fullText.length) {
       const chunk = fullText.slice(index, index + chunkSize);
-      // Only add non-empty chunks
       if (chunk) {
         addToStream(chunk);
       }
@@ -56,8 +55,9 @@ export default function Home() {
       // Simulate chunked streaming from Gemini
       mockChunkedStream(data.text, addToStream, 20, 4, streamIdRef);
     } catch (e) {
-      setResponseText('Error: ' + (e as Error).message);
-      addToStream('Error: ' + (e as Error).message);
+      const errorMsg = 'Error: ' + (e instanceof Error ? e.message : String(e));
+      setResponseText(errorMsg);
+      addToStream(errorMsg);
     } finally {
       setLoading(false);
     }

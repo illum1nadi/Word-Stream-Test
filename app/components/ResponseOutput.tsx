@@ -1,141 +1,57 @@
 'use client';
 
-import React, { useEffect } from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import { Box, Paper, Typography, List, ListItem, Link as MuiLink, Divider } from '@mui/material';
+import React, { useState, useEffect, useRef, memo } from 'react';
+import { Box, Paper, Typography } from '@mui/material';
 
 interface ResponseOutputProps {
   responseText: string;
 }
 
+// Memoized single letter with fade-in animation
+const FadeInLetter = memo(({ char, index }: { char: string; index: number }) => (
+  <span
+    className="fade-in-letter"
+    style={{ animationDelay: `${index * 0.03}s`, whiteSpace: 'pre' }}
+  >
+    {char === ' ' ? '\u00A0' : char}
+  </span>
+));
+
 export default function ResponseOutput({ responseText }: ResponseOutputProps) {
-  const [localText, setLocalText] = React.useState(responseText);
+  const [letters, setLetters] = useState<string[]>([]);
+  const prevTextRef = useRef('');
 
   useEffect(() => {
-    setLocalText(responseText);
-  }, [responseText]);
-
-  useEffect(() => {
-    function handleClear() {
-      setLocalText('');
+    // Append only new letters if text is an extension
+    if (responseText.startsWith(prevTextRef.current)) {
+      const newLetters = responseText.slice(prevTextRef.current.length).split('');
+      if (newLetters.length > 0) {
+        setLetters((prev) => [...prev, ...newLetters]);
+      }
+    } else {
+      // Reset if text changed drastically
+      setLetters(responseText.split(''));
     }
-    window.addEventListener('clear-response-output', handleClear);
-    return () => {
-      window.removeEventListener('clear-response-output', handleClear);
-    };
-  }, []);
+    prevTextRef.current = responseText;
+  }, [responseText]);
 
   return (
     <Box sx={{ mt: 3, px: 2, py: 1, maxWidth: 800, mx: 'auto' }}>
       <Paper elevation={3} sx={{ p: 3, backgroundColor: '#fafbfc' }}>
-        <ReactMarkdown
-          remarkPlugins={[remarkGfm]}
-          components={{
-            h1: ({ ...props }) => <Typography variant="h4" gutterBottom {...props} />,
-            h2: ({ ...props }) => <Typography variant="h5" gutterBottom {...props} />,
-            h3: ({ ...props }) => <Typography variant="h6" gutterBottom {...props} />,
-            h4: ({ ...props }) => <Typography variant="subtitle1" gutterBottom {...props} />,
-            h5: ({ ...props }) => <Typography variant="subtitle2" gutterBottom {...props} />,
-            h6: ({ ...props }) => <Typography variant="body1" fontWeight={700} gutterBottom {...props} />,
-            p: ({ children, ...props }) => {
-              // Helper to flatten children to string
-              function flattenToString(child: any): string {
-                if (typeof child === 'string') return child;
-                if (Array.isArray(child)) return child.map(flattenToString).join('');
-                if (child && typeof child === 'object' && 'props' in child && child.props && 'children' in child.props)
-                  return flattenToString(child.props.children);
-                if (typeof child === 'number') return String(child);
-                return '';
-              }
-              const text = flattenToString(children);
-              // If text is empty, fallback to default rendering
-              if (!text || !text.trim())
-                return (
-                  <Typography variant="body1" paragraph {...props}>
-                    {children}
-                  </Typography>
-                );
-              return (
-                <Typography variant="body1" paragraph {...props}>
-                  {text.split('').map((char, i) => (
-                    <span
-                      key={i}
-                      className="fade-in-letter"
-                      style={{
-                        animationDelay: `${i * 0.03}s`, // Controls stagger
-                      }}
-                    >
-                      {char === ' ' ? '\u00A0' : char}
-                    </span>
-                  ))}
-                </Typography>
-              );
-            },
-            ul: ({ ...props }) => <List sx={{ listStyleType: 'disc', pl: 3 }} {...props} />,
-            ol: ({ ...props }) => <List sx={{ listStyleType: 'decimal', pl: 3 }} {...props} />,
-            li: ({ ...props }) => <ListItem sx={{ display: 'list-item', pl: 0 }} {...props} />,
-            a: ({ ...props }) => <MuiLink target="_blank" rel="noopener" {...props} />,
-            blockquote: ({ ...props }) => (
-              <Typography
-                component="blockquote"
-                sx={{
-                  borderLeft: '4px solid #ccc',
-                  pl: 2,
-                  color: 'grey.700',
-                  fontStyle: 'italic',
-                  my: 2,
-                }}
-                {...props}
-              />
-            ),
-            hr: () => <Divider sx={{ my: 2 }} />,
-            code(props) {
-              // @ts-ignore
-              const isInline = props.inline;
-              const { children, ...rest } = props;
-              return (
-                <Box
-                  component="code"
-                  sx={{
-                    backgroundColor: '#f5f5f5',
-                    borderRadius: 1,
-                    px: 0.7,
-                    py: 0.3,
-                    fontFamily: 'monospace',
-                    fontSize: '0.95em',
-                    color: '#c7254e',
-                    ...(isInline ? { display: 'inline' } : { display: 'block', my: 1, p: 1 }),
-                  }}
-                  {...rest}
-                >
-                  {children}
-                </Box>
-              );
-            },
-            table: ({ ...props }) => (
-              <Box component="table" sx={{ width: '100%', borderCollapse: 'collapse', my: 2 }} {...props} />
-            ),
-            th: ({ ...props }) => (
-              <Box
-                component="th"
-                sx={{
-                  border: '1px solid #ccc',
-                  p: 1,
-                  backgroundColor: '#f0f0f0',
-                  fontWeight: 700,
-                }}
-                {...props}
-              />
-            ),
-            td: ({ ...props }) => (
-              <Box component="td" sx={{ border: '1px solid #ccc', p: 1 }} {...props} />
-            ),
-            tr: ({ ...props }) => <Box component="tr" {...props} />,
+        <Typography
+          component="p"
+          sx={{
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word',
+            overflowWrap: 'break-word',
+            fontSize: '1rem',
+            maxWidth: '100%',
           }}
         >
-          {localText}
-        </ReactMarkdown>
+          {letters.map((char, i) => (
+            <FadeInLetter key={i} char={char} index={i} />
+          ))}
+        </Typography>
       </Paper>
     </Box>
   );

@@ -1,12 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-/**
- * useWordStream - Custom hook for streaming text character by character.
- * @param text The input text to stream.
- * @param delay Delay in ms between each character (default: 5ms).
- * @returns The streamed text as it appears character by character.
- */
-//for response by api as a complete string.
+// For response by API as a complete string.
 export function useWordStream(text: string, delay: number = 5) {
   const [displayed, setDisplayed] = useState('');
   const indexRef = useRef(0);
@@ -32,7 +26,7 @@ export function useWordStream(text: string, delay: number = 5) {
   return displayed.replace(/undefined+$/, '');
 }
 
-//for response by api in chunks.
+// For response by API in chunks.
 export function useStreamingBuffer(delay: number = 5) {
   const [displayed, setDisplayed] = useState('');
   const bufferRef = useRef(''); // All tokens added so far
