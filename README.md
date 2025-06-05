@@ -55,3 +55,5 @@ const result = await model.generateContent(prompt);
 ### PromptInput.tsx: Handles user input
 
 ### ResponseOutput.tsx: Displays streaming response with Markdown
+
+![Demo](https://streamable.com/6856f9)
