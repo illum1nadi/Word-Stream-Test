@@ -56,4 +56,4 @@ const result = await model.generateContent(prompt);
 
 ### ResponseOutput.tsx: Displays streaming response with Markdown
 
-![Demo](https://streamable.com/6856f9)
+🎥 [Click here to open the video in a new tab](https://streamable.com/6856f9)
