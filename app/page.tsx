@@ -54,7 +54,7 @@ export default function Home() {
       const data = await res.json();
       setResponseText(data.text);
       // Simulate chunked streaming from Gemini
-      mockChunkedStream(data.text, addToStream, 20, 400, streamIdRef);
+      mockChunkedStream(data.text, addToStream, 20, 4, streamIdRef);
     } catch (e) {
       setResponseText('Error: ' + (e as Error).message);
       addToStream('Error: ' + (e as Error).message);

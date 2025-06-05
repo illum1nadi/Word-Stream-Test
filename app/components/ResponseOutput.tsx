@@ -38,7 +38,40 @@ export default function ResponseOutput({ responseText }: ResponseOutputProps) {
             h4: ({ ...props }) => <Typography variant="subtitle1" gutterBottom {...props} />,
             h5: ({ ...props }) => <Typography variant="subtitle2" gutterBottom {...props} />,
             h6: ({ ...props }) => <Typography variant="body1" fontWeight={700} gutterBottom {...props} />,
-            p: ({ ...props }) => <Typography variant="body1" paragraph {...props} />,
+            p: ({ children, ...props }) => {
+              // Helper to flatten children to string
+              function flattenToString(child: any): string {
+                if (typeof child === 'string') return child;
+                if (Array.isArray(child)) return child.map(flattenToString).join('');
+                if (child && typeof child === 'object' && 'props' in child && child.props && 'children' in child.props)
+                  return flattenToString(child.props.children);
+                if (typeof child === 'number') return String(child);
+                return '';
+              }
+              const text = flattenToString(children);
+              // If text is empty, fallback to default rendering
+              if (!text || !text.trim())
+                return (
+                  <Typography variant="body1" paragraph {...props}>
+                    {children}
+                  </Typography>
+                );
+              return (
+                <Typography variant="body1" paragraph {...props}>
+                  {text.split('').map((char, i) => (
+                    <span
+                      key={i}
+                      className="fade-in-letter"
+                      style={{
+                        animationDelay: `${i * 0.03}s`, // Controls stagger
+                      }}
+                    >
+                      {char === ' ' ? '\u00A0' : char}
+                    </span>
+                  ))}
+                </Typography>
+              );
+            },
             ul: ({ ...props }) => <List sx={{ listStyleType: 'disc', pl: 3 }} {...props} />,
             ol: ({ ...props }) => <List sx={{ listStyleType: 'decimal', pl: 3 }} {...props} />,
             li: ({ ...props }) => <ListItem sx={{ display: 'list-item', pl: 0 }} {...props} />,
