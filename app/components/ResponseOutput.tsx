@@ -41,10 +41,7 @@ export default function ResponseOutput({ responseText }: ResponseOutputProps) {
               />
             ),
             hr: () => <Divider sx={{ my: 2 }} />,
-            code(props) {
-              // @ts-ignore
-              const isInline = props.inline;
-              const { children, ...rest } = props;
+            code({ inline, children, ...rest }: { inline?: boolean; children?: React.ReactNode }) {
               return (
                 <Box
                   component="code"
@@ -56,7 +53,7 @@ export default function ResponseOutput({ responseText }: ResponseOutputProps) {
                     fontFamily: 'monospace',
                     fontSize: '0.95em',
                     color: '#c7254e',
-                    ...(isInline ? { display: 'inline' } : { display: 'block', my: 1, p: 1 }),
+                    ...(inline ? { display: 'inline' } : { display: 'block', my: 1, p: 1 }),
                   }}
                   {...rest}
                 >

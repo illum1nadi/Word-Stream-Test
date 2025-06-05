@@ -26,6 +26,8 @@ function mockChunkedStream(
 
 
 export default function Home() {
+  // const [responseText, setResponseText] = useState('');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [responseText, setResponseText] = useState('');
   const [loading, setLoading] = useState(false);
   const { displayed, addToStream } = useStreamingBuffer(5);
