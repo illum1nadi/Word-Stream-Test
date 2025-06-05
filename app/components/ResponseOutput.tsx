@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Box, Paper, Typography, List, ListItem, Link as MuiLink, Divider } from '@mui/material';
@@ -10,6 +10,22 @@ interface ResponseOutputProps {
 }
 
 export default function ResponseOutput({ responseText }: ResponseOutputProps) {
+  const [localText, setLocalText] = React.useState(responseText);
+
+  useEffect(() => {
+    setLocalText(responseText);
+  }, [responseText]);
+
+  useEffect(() => {
+    function handleClear() {
+      setLocalText('');
+    }
+    window.addEventListener('clear-response-output', handleClear);
+    return () => {
+      window.removeEventListener('clear-response-output', handleClear);
+    };
+  }, []);
+
   return (
     <Box sx={{ mt: 3, px: 2, py: 1, maxWidth: 800, mx: 'auto' }}>
       <Paper elevation={3} sx={{ p: 3, backgroundColor: '#fafbfc' }}>
@@ -85,7 +101,7 @@ export default function ResponseOutput({ responseText }: ResponseOutputProps) {
             tr: ({ ...props }) => <Box component="tr" {...props} />,
           }}
         >
-          {responseText}
+          {localText}
         </ReactMarkdown>
       </Paper>
     </Box>

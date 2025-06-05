@@ -14,6 +14,11 @@ export default function PromptInput({ onSubmit, loading }: PromptInputProps) {
     if (prompt.trim()) {
       onSubmit(prompt);
       setPrompt('');
+      // Clear the response output box immediately on submit
+      if (typeof window !== 'undefined') {
+        const event = new CustomEvent('clear-response-output');
+        window.dispatchEvent(event);
+      }
     }
   }
 

@@ -41,15 +41,34 @@ export function useStreamingBuffer(delay: number = 5) {
 
   const showNext = () => {
     if (indexRef.current < bufferRef.current.length) {
-      setDisplayed((prev) => prev + bufferRef.current[indexRef.current]);
+      const char = bufferRef.current[indexRef.current];
+      if (typeof char === 'string') {
+        setDisplayed((prev) => prev + char);
+      }
       indexRef.current++;
-      timeoutRef.current = setTimeout(showNext, delay);
+      // Only continue streaming if bufferRef.current hasn't been cleared (i.e., a new prompt hasn't interrupted)
+      if (bufferRef.current && indexRef.current <= bufferRef.current.length) {
+        timeoutRef.current = setTimeout(showNext, delay);
+      } else {
+        timeoutRef.current = null;
+      }
     } else {
       timeoutRef.current = null;
     }
   };
 
-  const addToStream = (newChunk: string) => {
+  const addToStream = (newChunk: string, options?: { clear?: boolean }) => {
+    // Only clear and stop if explicitly told to (on new prompt)
+    if (options?.clear) {
+      bufferRef.current = '';
+      indexRef.current = 0;
+      setDisplayed('');
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      return;
+    }
     bufferRef.current += newChunk;
     // Start streaming if not already
     if (!timeoutRef.current) {
