@@ -3,28 +3,12 @@
 import { useState } from 'react';
 import PromptInput from './components/PromptInput';
 import ResponseOutput from './components/ResponseOutput';
-
-function streamCharacters(
-  text: string,
-  setChars: React.Dispatch<React.SetStateAction<string>>,
-  delay = 25
-) {
-  let index = 0;
-
-  function showNext() {
-    if (index < text.length) {
-      setChars((prev) => prev + text[index]);
-      index++;
-      setTimeout(showNext, delay);
-    }
-  }
-
-  showNext();
-}
+import { useWordStream } from './lib/useWordStream';
 
 export default function Home() {
   const [responseText, setResponseText] = useState('');
   const [loading, setLoading] = useState(false);
+  const streamedText = useWordStream(responseText, 5);
 
   async function handlePrompt(prompt: string) {
     setLoading(true);
@@ -40,7 +24,7 @@ export default function Home() {
       if (!res.ok) throw new Error('Failed to fetch');
 
       const data = await res.json();
-      streamCharacters(data.text, setResponseText, 25); // Character streaming
+      setResponseText(data.text);
     } catch (e) {
       setResponseText('Error: ' + (e as Error).message);
     } finally {
@@ -52,7 +36,7 @@ export default function Home() {
     <div style={{ padding: 20, maxWidth: 600, margin: 'auto' }}>
       <h1>AI Gemini Prompt</h1>
       <PromptInput onSubmit={handlePrompt} loading={loading} />
-      <ResponseOutput responseText={responseText} />
+      <ResponseOutput responseText={streamedText} />
     </div>
   );
 }
