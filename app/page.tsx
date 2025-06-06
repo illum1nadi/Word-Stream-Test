@@ -5,29 +5,30 @@ import PromptInput from './components/PromptInput';
 import ResponseOutput from './components/ResponseOutput';
 import { useStreamingBuffer } from './lib/useWordStream';
 
-// Mimic a chunked stream from Gemini API as gemini does not support streaming in this example.
-const streamIdRef = { current: 0 };
+// Simulates streaming chunks like a Gemini API might do.
 function mockChunkedStream(
   fullText: string,
   addToStream: (chunk: string) => void,
   chunkSize: number = 20,
   chunkDelay: number = 4,
-  streamIdObj = streamIdRef
-) {
-  const myStreamId = ++streamIdObj.current;
+  streamIdRef: React.RefObject<number>
+): void {
+  const myStreamId = ++streamIdRef.current;
   let index = 0;
+
   function sendNextChunk() {
-    chunkSize = Math.floor(Math.random() * 11) + 10;
-    if (streamIdObj.current !== myStreamId) return; // Stop if a new stream started
+    const size = Math.floor(Math.random() * 11) + 10;
+    if (streamIdRef.current !== myStreamId) return; // Abort if newer stream started
     if (index < fullText.length) {
-      const chunk = fullText.slice(index, index + chunkSize);
+      const chunk = fullText.slice(index, index + size);
       if (chunk) {
         addToStream(chunk);
       }
-      index += chunkSize;
+      index += size;
       setTimeout(sendNextChunk, chunkDelay);
     }
   }
+
   sendNextChunk();
 }
 
@@ -37,11 +38,12 @@ export default function Home() {
   const { displayed, addToStream } = useStreamingBuffer(2);
   const streamIdRef = useRef(0);
 
-  async function handlePrompt(prompt: string) {
+  const handlePrompt = async (prompt: string): Promise<void> => {
     setLoading(true);
     setResponseText('');
-    addToStream('', { clear: true }); // Explicitly clear and stop stream on new prompt
-    streamIdRef.current += 1; // Invalidate any previous stream
+    addToStream('', { clear: true });
+    streamIdRef.current += 1;
+
     try {
       const res = await fetch('/api/gemini', {
         method: 'POST',
@@ -53,7 +55,6 @@ export default function Home() {
 
       const data = await res.json();
       setResponseText(data.text);
-      // Simulate chunked streaming from Gemini
       mockChunkedStream(data.text, addToStream, 20, 4, streamIdRef);
     } catch (e) {
       const errorMsg = 'Error: ' + (e instanceof Error ? e.message : String(e));
@@ -62,13 +63,25 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   return (
-    <div style={{ padding: 20, maxWidth: 600, margin: 'auto' }}>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100vh',
+        maxWidth: 800,
+        margin: '0 auto',
+        padding: 20,
+        boxSizing: 'border-box',
+      }}
+    >
       <h1>AI Gemini Prompt</h1>
       <PromptInput onSubmit={handlePrompt} loading={loading} />
-      <ResponseOutput responseText={displayed} />
+      <div style={{ flex: 1, overflow: 'hidden' }}>
+        <ResponseOutput responseText={displayed} />
+      </div>
     </div>
   );
 }

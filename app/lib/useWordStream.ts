@@ -1,79 +1,74 @@
-import { useEffect, useRef, useState } from 'react';
-
-// For response by API as a complete string.
-export function useWordStream(text: string, delay: number = 100) {
-  const [displayed, setDisplayed] = useState('');
-  const indexRef = useRef(0);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    setDisplayed('');
-    indexRef.current = 0;
-    if (!text) return;
-    function showNext() {
-      if (indexRef.current < text.length) {
-        setDisplayed((prev) => prev + (text[indexRef.current] ?? ''));
-        indexRef.current++;
-        timeoutRef.current = setTimeout(showNext, delay);
-      }
+import { useEffect, useRef, useState, useCallback } from 'react'
+export function useStreamingBuffer(delay = 100, batchSize = 1) {
+  const [displayed, setDisplayed] = useState('')
+  const bufferRef = useRef('')
+  const indexRef = useRef(0)
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const isStreamingRef = useRef(false)
+  // --- Clear any existing timeout and mark streaming as stopped ---
+  const clearCurrentTimeout = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+      timeoutRef.current = null
     }
-    showNext();
-    return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
-  }, [text, delay]);
-
-  return displayed.replace(/undefined+$/, '');
-}
-
-// For response by API in chunks.
-export function useStreamingBuffer(delay: number = 100) {
-  const [displayed, setDisplayed] = useState('');
-  const bufferRef = useRef('');
-  const indexRef = useRef(0);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const isStreamingRef = useRef(false); // <-- Track if we're already streaming
-
-  const showNext = () => {
+    isStreamingRef.current = false
+  }, [])
+  // --- Process one batch of characters, then schedule the next ---
+  const processBatch = useCallback(() => {
+    const remaining = bufferRef.current.length - indexRef.current
+    if (remaining <= 0) {
+      // Done streaming
+      clearCurrentTimeout()
+      bufferRef.current = ''
+      indexRef.current = 0
+      return
+    }
+    // Take up to batchSize characters
+    const take = Math.min(batchSize, remaining)
+    const nextChunk = bufferRef.current.substr(indexRef.current, take)
+    setDisplayed((prev) => prev + nextChunk)
+    indexRef.current += take
     if (indexRef.current < bufferRef.current.length) {
-      const char = bufferRef.current[indexRef.current];
-      if (typeof char === 'string') {
-        setDisplayed((prev) => prev + char);
-      }
-      indexRef.current++;
-      timeoutRef.current = setTimeout(showNext, delay);
+      timeoutRef.current = setTimeout(processBatch, delay)
     } else {
-      timeoutRef.current = null;
-      isStreamingRef.current = false; // Done streaming
+      // Finished exactly on this batch
+      clearCurrentTimeout()
+      bufferRef.current = ''
+      indexRef.current = 0
     }
-  };
-
-  const addToStream = (newChunk: string, options?: { clear?: boolean }) => {
-    if (options?.clear) {
-      bufferRef.current = '';
-      indexRef.current = 0;
-      setDisplayed('');
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-        timeoutRef.current = null;
+  }, [batchSize, delay, clearCurrentTimeout])
+  // --- Kick off streaming if not already streaming ---
+  const startStreaming = useCallback(() => {
+    if (isStreamingRef.current || indexRef.current >= bufferRef.current.length) {
+      return
+    }
+    isStreamingRef.current = true
+    processBatch()
+  }, [processBatch])
+  // --- Public API: add new text, or clear everything ---
+  const addToStream = useCallback(
+    (newChunk: string, options?: { clear?: boolean }) => {
+      if (options?.clear) {
+        clearCurrentTimeout()
+        bufferRef.current = ''
+        indexRef.current = 0
+        setDisplayed('')
+        return
       }
-      isStreamingRef.current = false;
-      return;
-    }
-
-    bufferRef.current += newChunk;
-
-    if (!isStreamingRef.current) {
-      isStreamingRef.current = true;
-      showNext();
-    }
-  };
-
+      if (!newChunk) return
+      bufferRef.current += newChunk
+      if (!isStreamingRef.current) {
+        startStreaming()
+      }
+    },
+    [startStreaming, clearCurrentTimeout]
+  )
+  // --- Clean up on unmount ---
   useEffect(() => {
     return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
-  }, []);
-
-  return { displayed, addToStream };
+      clearCurrentTimeout()
+    }
+  }, [clearCurrentTimeout])
+  // ONLY return displayed & addToStream:
+  return { displayed, addToStream }
 }
