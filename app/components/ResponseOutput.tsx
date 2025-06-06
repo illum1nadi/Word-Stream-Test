@@ -33,6 +33,9 @@ const FadeInLetter = memo(
   )
 );
 
+FadeInLetter.displayName = 'FadeInLetter';
+
+
 const AnimatedText = ({
   children,
   startIndex = 0,
