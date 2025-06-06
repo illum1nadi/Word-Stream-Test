@@ -35,7 +35,6 @@ const FadeInLetter = memo(
 
 FadeInLetter.displayName = 'FadeInLetter';
 
-
 const AnimatedText = ({
   children,
   startIndex = 0,
@@ -44,11 +43,54 @@ const AnimatedText = ({
   startIndex?: number;
 }): ReactElement => {
   if (typeof children !== 'string') return <>{children}</>;
+
+  // Split text by words and spaces, keeping spaces as tokens.
+  // This regex splits into words and spaces separately.
+  const tokens = children.match(/(\S+|\s+)/g) || [];
+
+  let globalIndex = startIndex;
+
   return (
     <>
-      {children.split('').map((char, i) => (
-        <FadeInLetter key={startIndex + i} char={char} index={startIndex + i} />
-      ))}
+      {tokens.map((token, i) => {
+        if (token.trim() === '') {
+          // It's whitespace: render spaces with non-breaking spaces so line breaks can occur here
+          // We wrap spaces individually for animation and keep them as normal inline spans
+          return token.split('').map((spaceChar, j) => {
+            const idx = globalIndex++;
+            return (
+              <span
+                key={`${i}-${j}`}
+                className="fade-in-letter"
+                style={{ animationDelay: `${idx * 0.0005}s`, whiteSpace: 'pre' }}
+              >
+                {'\u00A0'}
+              </span>
+            );
+          });
+        }
+
+        // It's a word: wrap in a no-wrap span so it doesn't break mid-word
+        // Then animate each letter inside it
+        const wordIndexStart = globalIndex;
+        globalIndex += token.length;
+
+        return (
+          <span
+            key={i}
+            style={{ whiteSpace: 'nowrap', display: 'inline-block' }}
+            aria-label={token} // for accessibility
+          >
+            {token.split('').map((char, j) => (
+              <FadeInLetter
+                key={`${i}-${j}`}
+                char={char}
+                index={wordIndexStart + j}
+              />
+            ))}
+          </span>
+        );
+      })}
     </>
   );
 };

@@ -1,11 +1,15 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
+
 export function useStreamingBuffer(delay = 100, batchSize = 1) {
   const [displayed, setDisplayed] = useState('')
-  const bufferRef = useRef('')
-  const indexRef = useRef(0)
+  const bufferRef = useRef<string[]>([]) // Using array instead of string for buffer
+  const chunksRef = useRef<string[]>([]) // Temporary chunks storage
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   const isStreamingRef = useRef(false)
-  // --- Clear any existing timeout and mark streaming as stopped ---
+  const lastUpdateRef = useRef(0) // For debouncing
+  const pendingUpdateRef = useRef(false) // Flag for pending state update
+
+  // Clear any existing timeout and mark streaming as stopped
   const clearCurrentTimeout = useCallback(() => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
@@ -13,62 +17,94 @@ export function useStreamingBuffer(delay = 100, batchSize = 1) {
     }
     isStreamingRef.current = false
   }, [])
-  // --- Process one batch of characters, then schedule the next ---
+
+  // Process one batch of characters, then schedule the next
   const processBatch = useCallback(() => {
-    const remaining = bufferRef.current.length - indexRef.current
-    if (remaining <= 0) {
+    if (bufferRef.current.length === 0) {
       // Done streaming
       clearCurrentTimeout()
-      bufferRef.current = ''
-      indexRef.current = 0
       return
     }
-    // Take up to batchSize characters
-    const take = Math.min(batchSize, remaining)
-    const nextChunk = bufferRef.current.substr(indexRef.current, take)
-    setDisplayed((prev) => prev + nextChunk)
-    indexRef.current += take
-    if (indexRef.current < bufferRef.current.length) {
+
+    // Take up to batchSize characters from the buffer
+    const batch = bufferRef.current.splice(0, batchSize)
+    const nextChunk = batch.join('')
+
+    // Use functional update to ensure we get the latest state
+    setDisplayed(prev => {
+      const newValue = prev + nextChunk
+      pendingUpdateRef.current = false
+      return newValue
+    })
+
+    // Schedule next batch if there's more content
+    if (bufferRef.current.length > 0) {
       timeoutRef.current = setTimeout(processBatch, delay)
     } else {
-      // Finished exactly on this batch
       clearCurrentTimeout()
-      bufferRef.current = ''
-      indexRef.current = 0
     }
   }, [batchSize, delay, clearCurrentTimeout])
-  // --- Kick off streaming if not already streaming ---
+
+  // Kick off streaming if not already streaming
   const startStreaming = useCallback(() => {
-    if (isStreamingRef.current || indexRef.current >= bufferRef.current.length) {
+    if (isStreamingRef.current || bufferRef.current.length === 0) {
       return
     }
     isStreamingRef.current = true
     processBatch()
   }, [processBatch])
-  // --- Public API: add new text, or clear everything ---
+
+  // Debounced flush of chunks to buffer
+  const flushChunks = useCallback(() => {
+    if (chunksRef.current.length > 0) {
+      bufferRef.current.push(...chunksRef.current)
+      chunksRef.current = []
+      if (!isStreamingRef.current) {
+        startStreaming()
+      }
+    }
+  }, [startStreaming])
+
+  // Public API: add new text, or clear everything
   const addToStream = useCallback(
     (newChunk: string, options?: { clear?: boolean }) => {
       if (options?.clear) {
         clearCurrentTimeout()
-        bufferRef.current = ''
-        indexRef.current = 0
+        bufferRef.current = []
+        chunksRef.current = []
         setDisplayed('')
+        pendingUpdateRef.current = false
         return
       }
+
       if (!newChunk) return
-      bufferRef.current += newChunk
-      if (!isStreamingRef.current) {
-        startStreaming()
+
+      // Add to chunks buffer instead of directly to main buffer
+      chunksRef.current.push(newChunk)
+
+      // Throttle updates - only flush if we're not already streaming
+      // or if it's been a while since last update
+      const now = Date.now()
+      if (!isStreamingRef.current || now - lastUpdateRef.current > delay) {
+        flushChunks()
+        lastUpdateRef.current = now
+      } else if (!timeoutRef.current) {
+        // Schedule a delayed flush if we're in the middle of streaming
+        timeoutRef.current = setTimeout(() => {
+          flushChunks()
+          lastUpdateRef.current = Date.now()
+        }, delay)
       }
     },
-    [startStreaming, clearCurrentTimeout]
+    [clearCurrentTimeout, delay, flushChunks]
   )
-  // --- Clean up on unmount ---
+
+  // Clean up on unmount
   useEffect(() => {
     return () => {
       clearCurrentTimeout()
     }
   }, [clearCurrentTimeout])
-  // ONLY return displayed & addToStream:
+
   return { displayed, addToStream }
 }

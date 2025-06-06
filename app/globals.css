@@ -13,4 +13,6 @@
   animation-duration: 0.6s;
   animation-fill-mode: forwards;
   animation-timing-function: ease-in;
+  /* preserve whitespace so spaces appear properly */
+  white-space: pre;
 }

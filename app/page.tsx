@@ -33,7 +33,7 @@ function mockChunkedStream(
 
 export default function Home() {
   const [loading, setLoading] = useState(false);
-  const { displayed, addToStream } = useStreamingBuffer(2);
+  const { displayed, addToStream } = useStreamingBuffer(100);
   const streamIdRef = useRef(0);
 
   const handlePrompt = async (prompt: string): Promise<void> => {
