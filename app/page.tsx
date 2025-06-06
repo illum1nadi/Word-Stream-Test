@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import PromptInput from './components/PromptInput';
-import ResponseOutput from './components/ResponseOutput';
+import {ResponseOutput} from './components/ResponseOutput';
 import { useStreamingBuffer } from './lib/useWordStream';
 
 // Simulates streaming chunks like a Gemini API might do.
