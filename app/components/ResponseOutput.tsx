@@ -1,9 +1,6 @@
 'use client';
 
 import React, {
-  useState,
-  useEffect,
-  useRef,
   memo,
   ReactNode,
   ReactElement,
@@ -220,7 +217,7 @@ const markdownComponents: Components = {
   ),
 };
 
-export default function ResponseOutput({
+export function ResponseOutput({
   responseText,
 }: ResponseOutputProps): ReactElement {
   return (

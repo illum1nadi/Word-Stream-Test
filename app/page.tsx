@@ -17,14 +17,13 @@ function mockChunkedStream(
   let index = 0;
 
   function sendNextChunk() {
-    const size = Math.floor(Math.random() * 11) + 10;
     if (streamIdRef.current !== myStreamId) return; // Abort if newer stream started
     if (index < fullText.length) {
-      const chunk = fullText.slice(index, index + size);
+      const chunk = fullText.slice(index, index + chunkSize);
       if (chunk) {
         addToStream(chunk);
       }
-      index += size;
+      index += chunkSize;
       setTimeout(sendNextChunk, chunkDelay);
     }
   }
@@ -33,14 +32,12 @@ function mockChunkedStream(
 }
 
 export default function Home() {
-  const [responseText, setResponseText] = useState('');
   const [loading, setLoading] = useState(false);
   const { displayed, addToStream } = useStreamingBuffer(2);
   const streamIdRef = useRef(0);
 
   const handlePrompt = async (prompt: string): Promise<void> => {
     setLoading(true);
-    setResponseText('');
     addToStream('', { clear: true });
     streamIdRef.current += 1;
 
@@ -54,11 +51,9 @@ export default function Home() {
       if (!res.ok) throw new Error('Failed to fetch');
 
       const data = await res.json();
-      setResponseText(data.text);
       mockChunkedStream(data.text, addToStream, 20, 4, streamIdRef);
     } catch (e) {
       const errorMsg = 'Error: ' + (e instanceof Error ? e.message : String(e));
-      setResponseText(errorMsg);
       addToStream(errorMsg);
     } finally {
       setLoading(false);
