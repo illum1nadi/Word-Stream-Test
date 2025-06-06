@@ -4,6 +4,22 @@ import { useState, useRef } from 'react';
 import PromptInput from './components/PromptInput';
 import ResponseOutput from './components/ResponseOutput';
 import { useStreamingBuffer } from './lib/useWordStream';
+import MarkdownWithStreamingTable from './components/markdownTable';
+
+// Helper function to detect if text contains a proper markdown table
+function hasMarkdownTable(text: string): boolean {
+  const lines = text.split('\n');
+  for (let i = 0; i < lines.length - 1; i++) {
+    const currentLine = lines[i].trim();
+    const nextLine = lines[i + 1]?.trim();
+    
+    // Check if current line has | and next line has dashes and |
+    if (currentLine.includes('|') && nextLine && /^[\s\-\|:]+$/.test(nextLine)) {
+      return true;
+    }
+  }
+  return false;
+}
 
 // Mimic a chunked stream from Gemini API as gemini does not support streaming in this example.
 const streamIdRef = { current: 0 };
@@ -67,7 +83,11 @@ export default function Home() {
     <div style={{ padding: 20, maxWidth: 600, margin: 'auto' }}>
       <h1>AI Gemini Prompt</h1>
       <PromptInput onSubmit={handlePrompt} loading={loading} />
-      <ResponseOutput responseText={displayed} />
+      {hasMarkdownTable(displayed) ? (
+        <MarkdownWithStreamingTable markdown={displayed} />
+      ) : (
+        <ResponseOutput responseText={displayed} />
+      )}
     </div>
   );
 }
