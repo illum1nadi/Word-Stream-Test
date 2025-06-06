@@ -10,7 +10,7 @@ function mockChunkedStream(
   fullText: string,
   addToStream: (chunk: string) => void,
   chunkSize: number = 20,
-  chunkDelay: number = 4,
+  chunkDelay: number = 200, // <-- SLOWER CHUNKS
   streamIdRef: React.RefObject<number>
 ): void {
   const myStreamId = ++streamIdRef.current;
@@ -33,7 +33,7 @@ function mockChunkedStream(
 
 export default function Home() {
   const [loading, setLoading] = useState(false);
-  const { displayed, addToStream } = useStreamingBuffer(100);
+  const { displayed, addToStream } = useStreamingBuffer(20);
   const streamIdRef = useRef(0);
 
   const handlePrompt = async (prompt: string): Promise<void> => {
@@ -51,7 +51,7 @@ export default function Home() {
       if (!res.ok) throw new Error('Failed to fetch');
 
       const data = await res.json();
-      mockChunkedStream(data.text, addToStream, 20, 4, streamIdRef);
+      mockChunkedStream(data.text, addToStream, 20, 200, streamIdRef);
     } catch (e) {
       const errorMsg = 'Error: ' + (e instanceof Error ? e.message : String(e));
       addToStream(errorMsg);

@@ -239,6 +239,9 @@ const markdownComponents: Components = {
         p: 1,
         backgroundColor: '#f0f0f0',
         fontWeight: 700,
+        whiteSpace: 'nowrap',   // Prevent breaking inside headers
+        overflowWrap: 'normal',
+        wordBreak: 'normal',
       }}
       {...props}
     />
@@ -249,6 +252,9 @@ const markdownComponents: Components = {
       sx={{
         border: '1px solid #ccc',
         p: 1,
+        whiteSpace: 'nowrap',   // Prevent breaking inside cells
+        overflowWrap: 'normal',
+        wordBreak: 'normal',
       }}
       {...props}
     />
