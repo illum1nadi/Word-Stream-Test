@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 // For response by API as a complete string.
-export function useWordStream(text: string, delay: number = 5) {
+export function useWordStream(text: string, delay: number = 100) {
   const [displayed, setDisplayed] = useState('');
   const indexRef = useRef(0);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -27,11 +27,12 @@ export function useWordStream(text: string, delay: number = 5) {
 }
 
 // For response by API in chunks.
-export function useStreamingBuffer(delay: number = 5) {
+export function useStreamingBuffer(delay: number = 100) {
   const [displayed, setDisplayed] = useState('');
-  const bufferRef = useRef(''); // All tokens added so far
+  const bufferRef = useRef('');
   const indexRef = useRef(0);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isStreamingRef = useRef(false); // <-- Track if we're already streaming
 
   const showNext = () => {
     if (indexRef.current < bufferRef.current.length) {
@@ -40,19 +41,14 @@ export function useStreamingBuffer(delay: number = 5) {
         setDisplayed((prev) => prev + char);
       }
       indexRef.current++;
-      // Only continue streaming if bufferRef.current hasn't been cleared (i.e., a new prompt hasn't interrupted)
-      if (bufferRef.current && indexRef.current <= bufferRef.current.length) {
-        timeoutRef.current = setTimeout(showNext, delay);
-      } else {
-        timeoutRef.current = null;
-      }
+      timeoutRef.current = setTimeout(showNext, delay);
     } else {
       timeoutRef.current = null;
+      isStreamingRef.current = false; // Done streaming
     }
   };
 
   const addToStream = (newChunk: string, options?: { clear?: boolean }) => {
-    // Only clear and stop if explicitly told to (on new prompt)
     if (options?.clear) {
       bufferRef.current = '';
       indexRef.current = 0;
@@ -61,11 +57,14 @@ export function useStreamingBuffer(delay: number = 5) {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
       }
+      isStreamingRef.current = false;
       return;
     }
+
     bufferRef.current += newChunk;
-    // Start streaming if not already
-    if (!timeoutRef.current) {
+
+    if (!isStreamingRef.current) {
+      isStreamingRef.current = true;
       showNext();
     }
   };

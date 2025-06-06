@@ -17,6 +17,7 @@ function mockChunkedStream(
   const myStreamId = ++streamIdObj.current;
   let index = 0;
   function sendNextChunk() {
+    chunkSize = Math.floor(Math.random() * 11) + 10;
     if (streamIdObj.current !== myStreamId) return; // Stop if a new stream started
     if (index < fullText.length) {
       const chunk = fullText.slice(index, index + chunkSize);
@@ -33,7 +34,7 @@ function mockChunkedStream(
 export default function Home() {
   const [responseText, setResponseText] = useState('');
   const [loading, setLoading] = useState(false);
-  const { displayed, addToStream } = useStreamingBuffer(5);
+  const { displayed, addToStream } = useStreamingBuffer(2);
   const streamIdRef = useRef(0);
 
   async function handlePrompt(prompt: string) {
