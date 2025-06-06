@@ -14,5 +14,5 @@
   animation-fill-mode: forwards;
   animation-timing-function: ease-in;
   /* preserve whitespace so spaces appear properly */
-  white-space: pre;
+  white-space: normal;
 }
