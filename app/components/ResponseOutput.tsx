@@ -13,9 +13,11 @@ import {
   ListItem,
   Divider,
   Link as MuiLink,
+  Checkbox,
 } from '@mui/material';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 import { Components } from 'react-markdown';
 
 interface ResponseOutputProps {
@@ -169,17 +171,28 @@ const markdownComponents: Components = {
       { variant: 'body1', paragraph: true, ...props },
       props.children
     ),
-  strong: (props) => animatedRenderer('strong', { ...props }, props.children),
+  strong: (props) =>
+    animatedRenderer('strong', { ...props }, props.children),
   em: (props) => animatedRenderer('em', { ...props }, props.children),
-  ul: (props) => <List sx={{ listStyleType: 'disc', pl: 3 }} {...props} />,
-  ol: (props) => <List sx={{ listStyleType: 'decimal', pl: 3 }} {...props} />,
-  li: (props) =>
-    animatedRenderer(
+  del: (props) =>
+    animatedRenderer('del', { style: { textDecoration: 'line-through' }, ...props }, props.children),
+  ul: (props) => <List sx={{ listStyleType: 'disc', pl: 3 }} {...props} />, 
+  ol: (props) => <List sx={{ listStyleType: 'decimal', pl: 3 }} {...props} />, 
+  li: ({ node, ...props }) => {
+    const checked = (node as any).checked;
+    // Wrap children in animated renderer
+    return animatedRenderer(
       ListItem,
       { sx: { display: 'list-item', pl: 0 }, ...props },
-      props.children
-    ),
-  a: (props) => <MuiLink target="_blank" rel="noopener" {...props} />,
+      <>
+        {typeof checked === 'boolean' && (
+          <Checkbox checked={checked} disabled size="small" sx={{ mr: 1 }} />
+        )}
+        {props.children}
+      </>
+    );
+  },
+  a: (props) => <MuiLink target="_blank" rel="noopener" {...props} />, 
   blockquote: (props) => (
     <Typography
       component="blockquote"
@@ -193,7 +206,7 @@ const markdownComponents: Components = {
       {...props}
     />
   ),
-  hr: () => <Divider sx={{ my: 2 }} />,
+  hr: () => <Divider sx={{ my: 2 }} />, 
   code: ({
     inline,
     children,
@@ -221,6 +234,22 @@ const markdownComponents: Components = {
       {children}
     </Box>
   ),
+  pre: (props) => (
+    <Box
+      component="pre"
+      sx={{ background: '#272822', color: '#f8f8f2', p: 2, borderRadius: 1, overflow: 'auto' }}
+      {...props}
+    />
+  ),
+  img: ({ src, alt, title }) => (
+    <Box
+      component="img"
+      src={src}
+      alt={alt}
+      title={title}
+      sx={{ maxWidth: '100%', borderRadius: 1, my: 2 }}
+    />
+  ),
   table: (props) => (
     <Box
       component="table"
@@ -228,9 +257,9 @@ const markdownComponents: Components = {
       {...props}
     />
   ),
-  thead: (props) => <Box component="thead" {...props} />,
-  tbody: (props) => <Box component="tbody" {...props} />,
-  tr: (props) => <Box component="tr" {...props} />,
+  thead: (props) => <Box component="thead" {...props} />, 
+  tbody: (props) => <Box component="tbody" {...props} />, 
+  tr: (props) => <Box component="tr" {...props} />, 
   th: (props) => (
     <Box
       component="th"
@@ -239,7 +268,7 @@ const markdownComponents: Components = {
         p: 1,
         backgroundColor: '#f0f0f0',
         fontWeight: 700,
-        whiteSpace: 'nowrap',   // Prevent breaking inside headers
+        whiteSpace: 'nowrap',
         overflowWrap: 'normal',
         wordBreak: 'normal',
       }}
@@ -252,7 +281,7 @@ const markdownComponents: Components = {
       sx={{
         border: '1px solid #ccc',
         p: 1,
-        whiteSpace: 'nowrap',   // Prevent breaking inside cells
+        whiteSpace: 'nowrap',
         overflowWrap: 'normal',
         wordBreak: 'normal',
       }}
@@ -279,32 +308,35 @@ export function ResponseOutput({
       `}</style>
 
       <Paper
-  elevation={3}
-  sx={{
-    p: 3,
-    height: '100%', // fixed height (no growing)
-    overflowY: 'auto',
-    backgroundColor: '#fafbfc',
-    display: 'flex',
-    flexDirection: 'column',
-  }}
->
-  <Box
-    sx={{
-      flex: 1,
-      overflowWrap: 'break-word',
-      wordBreak: 'break-word',
-      fontSize: '1rem',
-      lineHeight: 1.8,
-      pb: 6, // padding-bottom to prevent cutoff
-    }}
-  >
-    <ReactMarkdown components={markdownComponents} remarkPlugins={[remarkGfm]}>
-      {responseText}
-    </ReactMarkdown>
-  </Box>
-</Paper>
-
+        elevation={3}
+        sx={{
+          p: 3,
+          height: '100%',
+          overflowY: 'auto',
+          backgroundColor: '#fafbfc',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        <Box
+          sx={{
+            flex: 1,
+            overflowWrap: 'break-word',
+            wordBreak: 'break-word',
+            fontSize: '1rem',
+            lineHeight: 1.8,
+            pb: 6,
+          }}
+        >
+          <ReactMarkdown
+            components={markdownComponents}
+            remarkPlugins={[remarkGfm]}
+            rehypePlugins={[rehypeRaw]}
+          >
+            {responseText}
+          </ReactMarkdown>
+        </Box>
+      </Paper>
     </>
   );
 }
