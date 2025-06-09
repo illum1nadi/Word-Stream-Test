@@ -224,24 +224,59 @@ const markdownComponents: Components = {
   table: (props) => (
     <Box
       component="table"
-      sx={{ width: '100%', borderCollapse: 'collapse', my: 2 }}
+      sx={{
+        width: '100%',
+        borderCollapse: 'collapse',
+        my: 2,
+        display: 'block',
+        overflowX: 'auto',
+        '& td, & th': {
+          minWidth: '100px' // Ensures minimum column width
+        }
+      }}
       {...props}
     />
   ),
-  thead: (props) => <Box component="thead" {...props} />,
+  thead: (props) => (
+    <Box 
+      component="thead" 
+      sx={{ 
+        position: 'sticky',
+        top: 0,
+        backgroundColor: '#fff',
+        zIndex: 1
+      }} 
+      {...props} 
+    />
+  ),
   tbody: (props) => <Box component="tbody" {...props} />,
-  tr: (props) => <Box component="tr" {...props} />,
+  tr: (props) => (
+    <Box 
+      component="tr" 
+      sx={{
+        '&:nth-of-type(even)': {
+          backgroundColor: '#f9f9f9'  // Zebra striping for better readability
+        }
+      }}
+      {...props} 
+    />
+  ),
   th: (props) => (
     <Box
       component="th"
       sx={{
         border: '1px solid #ccc',
-        p: 1,
+        p: 2,
         backgroundColor: '#f0f0f0',
         fontWeight: 700,
-        whiteSpace: 'nowrap',   // Prevent breaking inside headers
-        overflowWrap: 'normal',
+        position: 'relative',
+        textAlign: 'left',
+        verticalAlign: 'middle',
+        lineHeight: 1.4,
+        whiteSpace: 'normal', // Allow text wrapping
+        overflowWrap: 'break-word',
         wordBreak: 'normal',
+        minWidth: '150px', // Minimum width for header cells
       }}
       {...props}
     />
@@ -251,10 +286,14 @@ const markdownComponents: Components = {
       component="td"
       sx={{
         border: '1px solid #ccc',
-        p: 1,
-        whiteSpace: 'nowrap',   // Prevent breaking inside cells
-        overflowWrap: 'normal',
+        p: 2,
+        textAlign: 'left',
+        verticalAlign: 'middle',
+        lineHeight: 1.4,
+        whiteSpace: 'normal', // Allow text wrapping
+        overflowWrap: 'break-word',
         wordBreak: 'normal',
+        minWidth: '150px', // Minimum width for data cells
       }}
       {...props}
     />
